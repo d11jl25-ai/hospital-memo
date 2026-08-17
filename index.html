@@ -103,6 +103,15 @@
       color: #d00;
     }
 
+    button.small-danger {
+      width: auto;
+      margin: 0;
+      padding: 8px 11px;
+      font-size: 13px;
+      background: #ffe5e5;
+      color: #d00;
+    }
+
     button.copy {
       width: auto;
       padding: 8px 12px;
@@ -132,8 +141,7 @@
     }
 
     input,
-    textarea,
-    select {
+    textarea {
       width: 100%;
       padding: 13px;
       border: 1px solid #ccc;
@@ -141,6 +149,10 @@
       font-size: 16px;
       background: white;
       margin-bottom: 15px;
+    }
+
+    textarea {
+      min-height: 90px;
     }
 
     .empty {
@@ -184,6 +196,7 @@
       margin-bottom: 20px;
       font-weight: bold;
       line-height: 1.6;
+      white-space: pre-line;
     }
 
     .status.open {
@@ -245,8 +258,35 @@
       margin: 0;
     }
 
-    .schedule-display {
-      line-height: 1.8;
+    .special-item {
+      padding: 12px 0;
+      border-top: 1px solid #e5e5e5;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .special-date {
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+
+    .special-note {
+      color: #777;
+      font-size: 14px;
+    }
+
+    .special-empty {
+      color: #777;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .help {
+      color: #777;
+      font-size: 14px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -259,6 +299,7 @@
 
 <main>
 
+  <!-- 一覧画面 -->
   <div id="listView">
 
     <div id="hospitalList"></div>
@@ -277,6 +318,7 @@
   </div>
 
 
+  <!-- 詳細画面 -->
   <div id="detailView" class="hidden">
 
     <div class="back" onclick="showList()">
@@ -307,6 +349,7 @@
         </div>
       </div>
 
+
       <div class="action-grid">
 
         <button id="phoneButton" onclick="callHospital()">
@@ -327,9 +370,15 @@
 
       </div>
 
+
       <div class="section">
         <div class="label">通常の受付時間</div>
-        <div class="value schedule-display" id="detailSchedule"></div>
+        <div class="value" id="detailSchedule"></div>
+      </div>
+
+      <div class="section">
+        <div class="label">特別休診日</div>
+        <div class="value" id="detailSpecialClosures"></div>
       </div>
 
       <div class="section">
@@ -361,6 +410,7 @@
   </div>
 
 
+  <!-- 登録・編集画面 -->
   <div id="formView" class="hidden">
 
     <div class="back" onclick="cancelForm()">
@@ -403,16 +453,48 @@
     </div>
 
 
+    <!-- 通常受付時間 -->
     <div class="card">
 
       <h2>通常の受付時間</h2>
 
-      <p style="color:#777; line-height:1.6;">
+      <p class="help">
         曜日ごとに受付時間を設定します。
         休診日は「休診」にチェックしてください。
       </p>
 
       <div id="scheduleForm"></div>
+
+    </div>
+
+
+    <!-- 特別休診日 -->
+    <div class="card">
+
+      <h2>特別休診日</h2>
+
+      <p class="help">
+        臨時休診、年末年始、お盆休みなど、
+        通常の曜日設定とは別に休診する日を登録できます。
+      </p>
+
+      <div class="label">休診日</div>
+      <input id="specialDate" type="date">
+
+      <div class="label">理由・メモ</div>
+      <input
+        id="specialNote"
+        type="text"
+        placeholder="例：院内研修、年末年始">
+
+      <button
+        type="button"
+        class="secondary"
+        onclick="addSpecialClosure()">
+        ＋ 特別休診日を追加
+      </button>
+
+      <div id="specialClosureList" style="margin-top:18px;"></div>
 
     </div>
 
@@ -448,6 +530,12 @@ const dayNames = [
 
 let selectedIndex = null;
 
+let editingSpecialClosures = [];
+
+
+/* --------------------
+   保存データ
+-------------------- */
 
 function getHospitals() {
 
@@ -474,6 +562,10 @@ function saveHospitals(hospitals) {
 
 }
 
+
+/* --------------------
+   通常受付時間
+-------------------- */
 
 function createEmptySchedule() {
 
@@ -507,7 +599,8 @@ function createScheduleForm(schedule) {
     const div =
       document.createElement("div");
 
-    div.className = "schedule-day";
+    div.className =
+      "schedule-day";
 
     div.innerHTML = `
       <div class="day-title">
@@ -528,6 +621,7 @@ function createScheduleForm(schedule) {
         <div class="label">午前</div>
 
         <div class="time-row">
+
           <input
             type="time"
             id="morningStart-${index}"
@@ -539,6 +633,7 @@ function createScheduleForm(schedule) {
             type="time"
             id="morningEnd-${index}"
             value="${day.morningEnd || ""}">
+
         </div>
 
         <div class="label" style="margin-top:12px;">
@@ -546,6 +641,7 @@ function createScheduleForm(schedule) {
         </div>
 
         <div class="time-row">
+
           <input
             type="time"
             id="afternoonStart-${index}"
@@ -557,6 +653,7 @@ function createScheduleForm(schedule) {
             type="time"
             id="afternoonEnd-${index}"
             value="${day.afternoonEnd || ""}">
+
         </div>
 
       </div>
@@ -586,7 +683,9 @@ function toggleDay(index) {
   if (!closed || !times) return;
 
   times.style.display =
-    closed.checked ? "none" : "block";
+    closed.checked
+    ? "none"
+    : "block";
 
 }
 
@@ -629,18 +728,258 @@ function readScheduleForm() {
 }
 
 
+/* --------------------
+   特別休診日
+-------------------- */
+
+function addSpecialClosure() {
+
+  const date =
+    document.getElementById(
+      "specialDate"
+    ).value;
+
+  const note =
+    document.getElementById(
+      "specialNote"
+    ).value.trim();
+
+
+  if (!date) {
+
+    alert(
+      "休診日の日付を選んでください。"
+    );
+
+    return;
+
+  }
+
+
+  const alreadyExists =
+    editingSpecialClosures.some(
+      function(item) {
+        return item.date === date;
+      }
+    );
+
+
+  if (alreadyExists) {
+
+    alert(
+      "この日はすでに登録されています。"
+    );
+
+    return;
+
+  }
+
+
+  editingSpecialClosures.push({
+    date: date,
+    note: note
+  });
+
+
+  editingSpecialClosures.sort(
+    function(a, b) {
+      return a.date.localeCompare(b.date);
+    }
+  );
+
+
+  document.getElementById(
+    "specialDate"
+  ).value = "";
+
+  document.getElementById(
+    "specialNote"
+  ).value = "";
+
+
+  renderSpecialClosureForm();
+
+}
+
+
+function removeSpecialClosure(index) {
+
+  editingSpecialClosures.splice(
+    index,
+    1
+  );
+
+  renderSpecialClosureForm();
+
+}
+
+
+function renderSpecialClosureForm() {
+
+  const list =
+    document.getElementById(
+      "specialClosureList"
+    );
+
+  list.innerHTML = "";
+
+
+  if (
+    editingSpecialClosures.length === 0
+  ) {
+
+    const empty =
+      document.createElement("div");
+
+    empty.className =
+      "special-empty";
+
+    empty.textContent =
+      "特別休診日は登録されていません。";
+
+    list.appendChild(empty);
+
+    return;
+
+  }
+
+
+  editingSpecialClosures.forEach(
+    function(item, index) {
+
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "special-item";
+
+
+      const info =
+        document.createElement("div");
+
+
+      const date =
+        document.createElement("div");
+
+      date.className =
+        "special-date";
+
+      date.textContent =
+        formatDate(item.date);
+
+
+      const note =
+        document.createElement("div");
+
+      note.className =
+        "special-note";
+
+      note.textContent =
+        item.note || "メモなし";
+
+
+      info.appendChild(date);
+      info.appendChild(note);
+
+
+      const remove =
+        document.createElement("button");
+
+      remove.className =
+        "small-danger";
+
+      remove.textContent =
+        "削除";
+
+      remove.type =
+        "button";
+
+      remove.onclick =
+        function() {
+          removeSpecialClosure(index);
+        };
+
+
+      row.appendChild(info);
+      row.appendChild(remove);
+
+      list.appendChild(row);
+
+    }
+  );
+
+}
+
+
+function formatDate(dateString) {
+
+  const parts =
+    dateString.split("-");
+
+  if (parts.length !== 3) {
+    return dateString;
+  }
+
+  return (
+    Number(parts[0]) +
+    "年" +
+    Number(parts[1]) +
+    "月" +
+    Number(parts[2]) +
+    "日"
+  );
+
+}
+
+
+function getTodayString() {
+
+  const now =
+    new Date();
+
+  const year =
+    now.getFullYear();
+
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      now.getDate()
+    ).padStart(2, "0");
+
+  return (
+    year +
+    "-" +
+    month +
+    "-" +
+    day
+  );
+
+}
+
+
+/* --------------------
+   一覧
+-------------------- */
+
 function showList() {
 
   selectedIndex = null;
 
-  document.getElementById("listView")
-    .classList.remove("hidden");
+  document.getElementById(
+    "listView"
+  ).classList.remove("hidden");
 
-  document.getElementById("detailView")
-    .classList.add("hidden");
+  document.getElementById(
+    "detailView"
+  ).classList.add("hidden");
 
-  document.getElementById("formView")
-    .classList.add("hidden");
+  document.getElementById(
+    "formView"
+  ).classList.add("hidden");
 
   renderHospitalList();
 
@@ -649,129 +988,166 @@ function showList() {
 
 function renderHospitalList() {
 
-  const hospitals = getHospitals();
+  const hospitals =
+    getHospitals();
 
   const list =
-    document.getElementById("hospitalList");
+    document.getElementById(
+      "hospitalList"
+    );
 
   list.innerHTML = "";
 
-  document.getElementById("emptyView")
-    .classList.toggle(
-      "hidden",
-      hospitals.length > 0
-    );
+
+  document.getElementById(
+    "emptyView"
+  ).classList.toggle(
+    "hidden",
+    hospitals.length > 0
+  );
 
 
-  hospitals.forEach(function(hospital, index) {
+  hospitals.forEach(
+    function(hospital, index) {
 
-    const card =
-      document.createElement("div");
+      const card =
+        document.createElement("div");
 
-    card.className =
-      "card hospital-card";
-
-
-    const name =
-      document.createElement("div");
-
-    name.className =
-      "hospital-name";
-
-    name.textContent =
-      "🏥 " + hospital.hospitalName;
+      card.className =
+        "card hospital-card";
 
 
-    const department =
-      document.createElement("div");
+      const name =
+        document.createElement("div");
 
-    department.className =
-      "department";
+      name.className =
+        "hospital-name";
 
-    department.textContent =
-      hospital.department || "";
-
-
-    const label =
-      document.createElement("div");
-
-    label.className = "label";
-
-    label.textContent =
-      "診察券番号";
+      name.textContent =
+        "🏥 " +
+        hospital.hospitalName;
 
 
-    const number =
-      document.createElement("div");
+      const department =
+        document.createElement("div");
 
-    number.className = "value";
+      department.className =
+        "department";
 
-    number.textContent =
-      hospital.cardNumber || "未登録";
-
-
-    card.appendChild(name);
-    card.appendChild(department);
-    card.appendChild(label);
-    card.appendChild(number);
+      department.textContent =
+        hospital.department || "";
 
 
-    card.onclick = function() {
-      showDetail(index);
-    };
+      const label =
+        document.createElement("div");
+
+      label.className =
+        "label";
+
+      label.textContent =
+        "診察券番号";
 
 
-    list.appendChild(card);
+      const number =
+        document.createElement("div");
 
-  });
+      number.className =
+        "value";
+
+      number.textContent =
+        hospital.cardNumber ||
+        "未登録";
+
+
+      card.appendChild(name);
+      card.appendChild(department);
+      card.appendChild(label);
+      card.appendChild(number);
+
+
+      card.onclick =
+        function() {
+          showDetail(index);
+        };
+
+
+      list.appendChild(card);
+
+    }
+  );
 
 }
 
 
+/* --------------------
+   詳細
+-------------------- */
+
 function showDetail(index) {
 
-  const hospitals = getHospitals();
+  const hospitals =
+    getHospitals();
 
   const hospital =
     hospitals[index];
 
   if (!hospital) return;
 
+
   selectedIndex = index;
 
 
-  document.getElementById("detailHospitalName")
-    .textContent =
-    "🏥 " + hospital.hospitalName;
+  document.getElementById(
+    "detailHospitalName"
+  ).textContent =
+    "🏥 " +
+    hospital.hospitalName;
 
-  document.getElementById("detailDepartment")
-    .textContent =
+
+  document.getElementById(
+    "detailDepartment"
+  ).textContent =
     hospital.department || "";
 
-  document.getElementById("detailCardNumber")
-    .textContent =
-    hospital.cardNumber || "未登録";
 
-  document.getElementById("detailPhone")
-    .textContent =
-    hospital.phone || "未登録";
+  document.getElementById(
+    "detailCardNumber"
+  ).textContent =
+    hospital.cardNumber ||
+    "未登録";
 
-  document.getElementById("detailAddress")
-    .textContent =
-    hospital.address || "未登録";
 
-  document.getElementById("detailMemo")
-    .textContent =
-    hospital.memo || "なし";
+  document.getElementById(
+    "detailPhone"
+  ).textContent =
+    hospital.phone ||
+    "未登録";
+
+
+  document.getElementById(
+    "detailAddress"
+  ).textContent =
+    hospital.address ||
+    "未登録";
+
+
+  document.getElementById(
+    "detailMemo"
+  ).textContent =
+    hospital.memo ||
+    "なし";
 
 
   if (hospital.appointment) {
 
     const date =
-      new Date(hospital.appointment);
+      new Date(
+        hospital.appointment
+      );
 
-    document.getElementById("detailAppointment")
-      .textContent =
+    document.getElementById(
+      "detailAppointment"
+    ).textContent =
       date.toLocaleString(
         "ja-JP",
         {
@@ -785,14 +1161,17 @@ function showDetail(index) {
 
   } else {
 
-    document.getElementById("detailAppointment")
-      .textContent =
+    document.getElementById(
+      "detailAppointment"
+    ).textContent =
       "未登録";
 
   }
 
 
   displaySchedule(hospital);
+
+  displaySpecialClosures(hospital);
 
   updateReceptionStatus(hospital);
 
@@ -804,7 +1183,8 @@ function showDetail(index) {
 
   setButtonState(
     "mapButton",
-    hospital.address || hospital.hospitalName
+    hospital.address ||
+    hospital.hospitalName
   );
 
   setButtonState(
@@ -818,14 +1198,17 @@ function showDetail(index) {
   );
 
 
-  document.getElementById("listView")
-    .classList.add("hidden");
+  document.getElementById(
+    "listView"
+  ).classList.add("hidden");
 
-  document.getElementById("detailView")
-    .classList.remove("hidden");
+  document.getElementById(
+    "detailView"
+  ).classList.remove("hidden");
 
-  document.getElementById("formView")
-    .classList.add("hidden");
+  document.getElementById(
+    "formView"
+  ).classList.add("hidden");
 
 }
 
@@ -837,9 +1220,12 @@ function displaySchedule(hospital) {
       "detailSchedule"
     );
 
+
   if (
     !hospital.schedule ||
-    !Array.isArray(hospital.schedule)
+    !Array.isArray(
+      hospital.schedule
+    )
   ) {
 
     target.textContent =
@@ -853,14 +1239,20 @@ function displaySchedule(hospital) {
 
   let text = "";
 
+
   hospital.schedule.forEach(
     function(day, index) {
 
-      text += dayNames[index] + "　";
+      text +=
+        dayNames[index] +
+        "　";
+
 
       if (day.closed) {
 
-        text += "休診\n";
+        text +=
+          "休診\n";
+
         return;
 
       }
@@ -913,21 +1305,147 @@ function displaySchedule(hospital) {
 }
 
 
-function updateReceptionStatus(hospital) {
+function displaySpecialClosures(
+  hospital
+) {
+
+  const target =
+    document.getElementById(
+      "detailSpecialClosures"
+    );
+
+
+  const closures =
+    hospital.specialClosures;
+
+
+  if (
+    !Array.isArray(closures) ||
+    closures.length === 0
+  ) {
+
+    target.textContent =
+      "登録なし";
+
+    return;
+
+  }
+
+
+  const futureClosures =
+    closures.filter(
+      function(item) {
+        return (
+          item.date >=
+          getTodayString()
+        );
+      }
+    );
+
+
+  const showing =
+    futureClosures.length
+    ? futureClosures
+    : closures.slice(-3);
+
+
+  let text = "";
+
+
+  showing.forEach(
+    function(item) {
+
+      text +=
+        formatDate(item.date);
+
+      if (item.note) {
+        text +=
+          "　" +
+          item.note;
+      }
+
+      text += "\n";
+
+    }
+  );
+
+
+  target.textContent = text;
+
+}
+
+
+/* --------------------
+   現在の受付状況
+-------------------- */
+
+function updateReceptionStatus(
+  hospital
+) {
 
   const box =
     document.getElementById(
       "receptionStatus"
     );
 
-
   box.className =
     "status unknown";
 
 
+  const todayString =
+    getTodayString();
+
+
+  const closures =
+    Array.isArray(
+      hospital.specialClosures
+    )
+    ? hospital.specialClosures
+    : [];
+
+
+  const special =
+    closures.find(
+      function(item) {
+        return (
+          item.date ===
+          todayString
+        );
+      }
+    );
+
+
+  /*
+    特別休診日を最優先
+  */
+
+  if (special) {
+
+    box.className =
+      "status closed";
+
+    box.textContent =
+      "🔴 本日は臨時休診です" +
+      (
+        special.note
+        ? "\n" + special.note
+        : ""
+      );
+
+    return;
+
+  }
+
+
+  /*
+    ここから通常の曜日判定
+  */
+
   if (
     !hospital.schedule ||
-    !Array.isArray(hospital.schedule)
+    !Array.isArray(
+      hospital.schedule
+    )
   ) {
 
     box.textContent =
@@ -938,13 +1456,16 @@ function updateReceptionStatus(hospital) {
   }
 
 
-  const now = new Date();
+  const now =
+    new Date();
 
   const dayIndex =
     now.getDay();
 
   const today =
-    hospital.schedule[dayIndex];
+    hospital.schedule[
+      dayIndex
+    ];
 
 
   if (!today) {
@@ -1096,20 +1617,9 @@ function timeToMinutes(time) {
 }
 
 
-function setButtonState(id, available) {
-
-  const button =
-    document.getElementById(id);
-
-  button.disabled = !available;
-
-  button.classList.toggle(
-    "unavailable",
-    !available
-  );
-
-}
-
+/* --------------------
+   登録・編集
+-------------------- */
 
 function showForm() {
 
@@ -1117,29 +1627,41 @@ function showForm() {
 
   clearForm();
 
-  document.getElementById("formTitle")
-    .textContent =
+  editingSpecialClosures = [];
+
+
+  document.getElementById(
+    "formTitle"
+  ).textContent =
     "病院を登録";
+
 
   createScheduleForm(
     createEmptySchedule()
   );
 
-  document.getElementById("listView")
-    .classList.add("hidden");
+  renderSpecialClosureForm();
 
-  document.getElementById("detailView")
-    .classList.add("hidden");
 
-  document.getElementById("formView")
-    .classList.remove("hidden");
+  document.getElementById(
+    "listView"
+  ).classList.add("hidden");
+
+  document.getElementById(
+    "detailView"
+  ).classList.add("hidden");
+
+  document.getElementById(
+    "formView"
+  ).classList.remove("hidden");
 
 }
 
 
 function editHospital() {
 
-  const hospitals = getHospitals();
+  const hospitals =
+    getHospitals();
 
   const hospital =
     hospitals[selectedIndex];
@@ -1147,41 +1669,50 @@ function editHospital() {
   if (!hospital) return;
 
 
-  document.getElementById("formTitle")
-    .textContent =
+  document.getElementById(
+    "formTitle"
+  ).textContent =
     "病院情報を編集";
 
 
-  document.getElementById("hospitalName")
-    .value =
+  document.getElementById(
+    "hospitalName"
+  ).value =
     hospital.hospitalName || "";
 
-  document.getElementById("department")
-    .value =
+  document.getElementById(
+    "department"
+  ).value =
     hospital.department || "";
 
-  document.getElementById("cardNumber")
-    .value =
+  document.getElementById(
+    "cardNumber"
+  ).value =
     hospital.cardNumber || "";
 
-  document.getElementById("phone")
-    .value =
+  document.getElementById(
+    "phone"
+  ).value =
     hospital.phone || "";
 
-  document.getElementById("address")
-    .value =
+  document.getElementById(
+    "address"
+  ).value =
     hospital.address || "";
 
-  document.getElementById("website")
-    .value =
+  document.getElementById(
+    "website"
+  ).value =
     hospital.website || "";
 
-  document.getElementById("appointment")
-    .value =
+  document.getElementById(
+    "appointment"
+  ).value =
     hospital.appointment || "";
 
-  document.getElementById("memo")
-    .value =
+  document.getElementById(
+    "memo"
+  ).value =
     hospital.memo || "";
 
 
@@ -1191,11 +1722,28 @@ function editHospital() {
   );
 
 
-  document.getElementById("detailView")
-    .classList.add("hidden");
+  editingSpecialClosures =
+    Array.isArray(
+      hospital.specialClosures
+    )
+    ? JSON.parse(
+        JSON.stringify(
+          hospital.specialClosures
+        )
+      )
+    : [];
 
-  document.getElementById("formView")
-    .classList.remove("hidden");
+
+  renderSpecialClosureForm();
+
+
+  document.getElementById(
+    "detailView"
+  ).classList.add("hidden");
+
+  document.getElementById(
+    "formView"
+  ).classList.remove("hidden");
 
 }
 
@@ -1205,39 +1753,50 @@ function saveHospital() {
   const hospital = {
 
     hospitalName:
-      document.getElementById("hospitalName")
-      .value.trim(),
+      document.getElementById(
+        "hospitalName"
+      ).value.trim(),
 
     department:
-      document.getElementById("department")
-      .value.trim(),
+      document.getElementById(
+        "department"
+      ).value.trim(),
 
     cardNumber:
-      document.getElementById("cardNumber")
-      .value.trim(),
+      document.getElementById(
+        "cardNumber"
+      ).value.trim(),
 
     phone:
-      document.getElementById("phone")
-      .value.trim(),
+      document.getElementById(
+        "phone"
+      ).value.trim(),
 
     address:
-      document.getElementById("address")
-      .value.trim(),
+      document.getElementById(
+        "address"
+      ).value.trim(),
 
     website:
-      document.getElementById("website")
-      .value.trim(),
+      document.getElementById(
+        "website"
+      ).value.trim(),
 
     appointment:
-      document.getElementById("appointment")
-      .value,
+      document.getElementById(
+        "appointment"
+      ).value,
 
     memo:
-      document.getElementById("memo")
-      .value.trim(),
+      document.getElementById(
+        "memo"
+      ).value.trim(),
 
     schedule:
-      readScheduleForm()
+      readScheduleForm(),
+
+    specialClosures:
+      editingSpecialClosures
 
   };
 
@@ -1255,8 +1814,12 @@ function saveHospital() {
 
   if (
     hospital.website &&
-    !hospital.website.startsWith("http://") &&
-    !hospital.website.startsWith("https://")
+    !hospital.website.startsWith(
+      "http://"
+    ) &&
+    !hospital.website.startsWith(
+      "https://"
+    )
   ) {
 
     hospital.website =
@@ -1270,9 +1833,13 @@ function saveHospital() {
     getHospitals();
 
 
-  if (selectedIndex === null) {
+  if (
+    selectedIndex === null
+  ) {
 
-    hospitals.push(hospital);
+    hospitals.push(
+      hospital
+    );
 
   } else {
 
@@ -1287,7 +1854,9 @@ function saveHospital() {
   }
 
 
-  saveHospitals(hospitals);
+  saveHospitals(
+    hospitals
+  );
 
   showList();
 
@@ -1296,12 +1865,16 @@ function saveHospital() {
 
 function deleteHospital() {
 
-  if (selectedIndex === null) return;
+  if (
+    selectedIndex === null
+  ) return;
+
 
   const answer =
     confirm(
       "この病院の登録情報を削除しますか？"
     );
+
 
   if (!answer) return;
 
@@ -1309,12 +1882,16 @@ function deleteHospital() {
   const hospitals =
     getHospitals();
 
+
   hospitals.splice(
     selectedIndex,
     1
   );
 
-  saveHospitals(hospitals);
+
+  saveHospitals(
+    hospitals
+  );
 
   showList();
 
@@ -1323,9 +1900,13 @@ function deleteHospital() {
 
 function cancelForm() {
 
-  if (selectedIndex !== null) {
+  if (
+    selectedIndex !== null
+  ) {
 
-    showDetail(selectedIndex);
+    showDetail(
+      selectedIndex
+    );
 
   } else {
 
@@ -1346,9 +1927,15 @@ function clearForm() {
   document.getElementById("website").value = "";
   document.getElementById("appointment").value = "";
   document.getElementById("memo").value = "";
+  document.getElementById("specialDate").value = "";
+  document.getElementById("specialNote").value = "";
 
 }
 
+
+/* --------------------
+   便利ボタン
+-------------------- */
 
 function getSelectedHospital() {
 
@@ -1362,6 +1949,25 @@ function getSelectedHospital() {
   return (
     hospitals[selectedIndex] ||
     null
+  );
+
+}
+
+
+function setButtonState(
+  id,
+  available
+) {
+
+  const button =
+    document.getElementById(id);
+
+  button.disabled =
+    !available;
+
+  button.classList.toggle(
+    "unavailable",
+    !available
   );
 
 }
@@ -1391,7 +1997,9 @@ async function copyCardNumber() {
   } catch {
 
     const textarea =
-      document.createElement("textarea");
+      document.createElement(
+        "textarea"
+      );
 
     textarea.value =
       hospital.cardNumber;
@@ -1433,6 +2041,7 @@ function callHospital() {
       /[^0-9+]/g,
       ""
     );
+
 
   window.location.href =
     "tel:" + phone;
@@ -1491,8 +2100,10 @@ function showToast(message) {
       "toast"
     );
 
+
   toast.textContent =
     message;
+
 
   toast.classList.remove(
     "hidden"
