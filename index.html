@@ -40,34 +40,23 @@
       background: white;
       border-radius: 18px;
       padding: 20px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
+    .hospital-card {
+      cursor: pointer;
+    }
+
     .hospital-name {
-      font-size: 23px;
+      font-size: 21px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .department {
       color: #777;
-      margin-bottom: 18px;
-    }
-
-    .status {
-      display: inline-block;
-      background: #e8f7ed;
-      color: #16803c;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 18px;
-    }
-
-    .section {
-      margin-bottom: 18px;
+      margin-bottom: 12px;
     }
 
     .label {
@@ -83,9 +72,12 @@
     }
 
     .number {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
-      letter-spacing: 1px;
+    }
+
+    .section {
+      margin-bottom: 18px;
     }
 
     button {
@@ -123,7 +115,6 @@
 
     textarea {
       min-height: 90px;
-      resize: vertical;
     }
 
     .empty {
@@ -136,6 +127,13 @@
     .hidden {
       display: none;
     }
+
+    .back {
+      color: #007aff;
+      margin-bottom: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -147,107 +145,127 @@
 
 <main>
 
-  <!-- 病院情報 -->
-  <div id="hospitalView" class="card hidden">
+  <!-- 一覧画面 -->
+  <div id="listView">
 
-    <div class="hospital-name" id="viewHospitalName"></div>
-    <div class="department" id="viewDepartment"></div>
+    <div id="hospitalList"></div>
 
-    <div class="status">
-      ● 登録済み
-    </div>
-
-    <div class="section">
-      <div class="label">診察券番号</div>
-      <div class="value number" id="viewCardNumber"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">受付時間</div>
-      <div class="value" id="viewHours"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">休診日</div>
-      <div class="value" id="viewClosed"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">電話番号</div>
-      <div class="value" id="viewPhone"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">次回予約</div>
-      <div class="value" id="viewAppointment"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">メモ</div>
-      <div class="value" id="viewMemo"></div>
-    </div>
-
-    <button onclick="editHospital()">✏️ 編集</button>
-
-    <button class="danger" onclick="deleteHospital()">
-      登録情報を削除
-    </button>
-
-  </div>
-
-
-  <!-- 登録されていない場合 -->
-  <div id="emptyView" class="card">
-    <div class="empty">
-      まだ病院が登録されていません。<br>
-      下のボタンから登録してください。
+    <div id="emptyView" class="card hidden">
+      <div class="empty">
+        まだ病院が登録されていません。<br>
+        下のボタンから登録してください。
+      </div>
     </div>
 
     <button onclick="showForm()">
-      ＋ 病院を登録
+      ＋ 病院を追加
     </button>
+
   </div>
 
 
-  <!-- 登録フォーム -->
-  <div id="formView" class="card hidden">
+  <!-- 詳細画面 -->
+  <div id="detailView" class="hidden">
 
-    <h2 id="formTitle">病院を登録</h2>
+    <div class="back" onclick="showList()">
+      ← 一覧に戻る
+    </div>
 
-    <div class="label">病院名</div>
-    <input id="hospitalName" type="text" placeholder="例：〇〇眼科">
+    <div class="card">
 
-    <div class="label">診療科</div>
-    <input id="department" type="text" placeholder="例：眼科">
+      <div class="hospital-name" id="detailHospitalName"></div>
+      <div class="department" id="detailDepartment"></div>
 
-    <div class="label">診察券番号</div>
-    <input id="cardNumber" type="text" inputmode="numeric" placeholder="例：12345678">
+      <div class="section">
+        <div class="label">診察券番号</div>
+        <div class="value number" id="detailCardNumber"></div>
+      </div>
 
-    <div class="label">受付時間</div>
-    <textarea id="hours" placeholder="例：
+      <div class="section">
+        <div class="label">受付時間</div>
+        <div class="value" id="detailHours"></div>
+      </div>
+
+      <div class="section">
+        <div class="label">休診日</div>
+        <div class="value" id="detailClosed"></div>
+      </div>
+
+      <div class="section">
+        <div class="label">電話番号</div>
+        <div class="value" id="detailPhone"></div>
+      </div>
+
+      <div class="section">
+        <div class="label">次回予約</div>
+        <div class="value" id="detailAppointment"></div>
+      </div>
+
+      <div class="section">
+        <div class="label">メモ</div>
+        <div class="value" id="detailMemo"></div>
+      </div>
+
+      <button onclick="editHospital()">
+        ✏️ 編集
+      </button>
+
+      <button class="danger" onclick="deleteHospital()">
+        登録情報を削除
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- 登録・編集画面 -->
+  <div id="formView" class="hidden">
+
+    <div class="back" onclick="cancelForm()">
+      ← 戻る
+    </div>
+
+    <div class="card">
+
+      <h2 id="formTitle">病院を登録</h2>
+
+      <div class="label">病院名</div>
+      <input id="hospitalName" type="text" placeholder="例：〇〇眼科">
+
+      <div class="label">診療科</div>
+      <input id="department" type="text" placeholder="例：眼科">
+
+      <div class="label">診察券番号</div>
+      <input id="cardNumber" type="text" inputmode="numeric">
+
+      <div class="label">受付時間</div>
+      <textarea id="hours" placeholder="例：
 月・火・木・金
 8:30〜12:30
 14:00〜17:30"></textarea>
 
-    <div class="label">休診日</div>
-    <input id="closed" type="text" placeholder="例：水曜・日曜・祝日">
+      <div class="label">休診日</div>
+      <input id="closed" type="text" placeholder="例：水曜・日曜・祝日">
 
-    <div class="label">電話番号</div>
-    <input id="phone" type="tel" placeholder="例：096-000-0000">
+      <div class="label">電話番号</div>
+      <input id="phone" type="tel" placeholder="例：096-000-0000">
 
-    <div class="label">次回予約</div>
-    <input id="appointment" type="datetime-local">
+      <div class="label">次回予約</div>
+      <input id="appointment" type="datetime-local">
 
-    <div class="label">メモ</div>
-    <textarea id="memo" placeholder="診察時に聞きたいことなど"></textarea>
+      <div class="label">メモ</div>
+      <textarea id="memo"></textarea>
 
-    <button onclick="saveHospital()">
-      💾 保存する
-    </button>
+      <button onclick="saveHospital()">
+        💾 保存する
+      </button>
 
-    <button class="secondary" onclick="cancelForm()">
-      キャンセル
-    </button>
+      <button class="secondary" onclick="cancelForm()">
+        キャンセル
+      </button>
+
+    </div>
 
   </div>
 
@@ -256,162 +274,152 @@
 
 <script>
 
-  const STORAGE_KEY = "hospitalMemoData";
+  const STORAGE_KEY = "hospitalMemoList";
 
-  let editing = false;
-
-
-  function showForm() {
-
-    editing = false;
-
-    document.getElementById("formTitle").textContent = "病院を登録";
-
-    document.getElementById("formView").classList.remove("hidden");
-    document.getElementById("hospitalView").classList.add("hidden");
-    document.getElementById("emptyView").classList.add("hidden");
-
-  }
+  let selectedIndex = null;
 
 
-  function editHospital() {
-
-    const data = getData();
-
-    if (!data) return;
-
-    editing = true;
-
-    document.getElementById("formTitle").textContent = "病院情報を編集";
-
-    document.getElementById("hospitalName").value = data.hospitalName || "";
-    document.getElementById("department").value = data.department || "";
-    document.getElementById("cardNumber").value = data.cardNumber || "";
-    document.getElementById("hours").value = data.hours || "";
-    document.getElementById("closed").value = data.closed || "";
-    document.getElementById("phone").value = data.phone || "";
-    document.getElementById("appointment").value = data.appointment || "";
-    document.getElementById("memo").value = data.memo || "";
-
-    document.getElementById("formView").classList.remove("hidden");
-    document.getElementById("hospitalView").classList.add("hidden");
-    document.getElementById("emptyView").classList.add("hidden");
-
-  }
-
-
-  function saveHospital() {
-
-    const data = {
-
-      hospitalName:
-        document.getElementById("hospitalName").value.trim(),
-
-      department:
-        document.getElementById("department").value.trim(),
-
-      cardNumber:
-        document.getElementById("cardNumber").value.trim(),
-
-      hours:
-        document.getElementById("hours").value.trim(),
-
-      closed:
-        document.getElementById("closed").value.trim(),
-
-      phone:
-        document.getElementById("phone").value.trim(),
-
-      appointment:
-        document.getElementById("appointment").value,
-
-      memo:
-        document.getElementById("memo").value.trim()
-
-    };
-
-
-    if (!data.hospitalName) {
-
-      alert("病院名を入力してください。");
-      return;
-
-    }
-
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(data)
-    );
-
-
-    editing = false;
-
-    displayHospital();
-
-  }
-
-
-  function getData() {
+  function getHospitals() {
 
     const saved =
       localStorage.getItem(STORAGE_KEY);
 
-    if (!saved) return null;
+    if (!saved) return [];
 
     return JSON.parse(saved);
 
   }
 
 
-  function displayHospital() {
+  function saveHospitals(hospitals) {
 
-    const data = getData();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(hospitals)
+    );
 
-    if (!data) {
-
-      document.getElementById("hospitalView")
-        .classList.add("hidden");
-
-      document.getElementById("formView")
-        .classList.add("hidden");
-
-      document.getElementById("emptyView")
-        .classList.remove("hidden");
-
-      return;
-
-    }
+  }
 
 
-    document.getElementById("viewHospitalName")
-      .textContent = "🏥 " + data.hospitalName;
+  function showList() {
 
-    document.getElementById("viewDepartment")
-      .textContent = data.department;
+    selectedIndex = null;
 
-    document.getElementById("viewCardNumber")
-      .textContent = data.cardNumber || "未登録";
+    document.getElementById("listView")
+      .classList.remove("hidden");
 
-    document.getElementById("viewHours")
-      .textContent = data.hours || "未登録";
+    document.getElementById("detailView")
+      .classList.add("hidden");
 
-    document.getElementById("viewClosed")
-      .textContent = data.closed || "未登録";
+    document.getElementById("formView")
+      .classList.add("hidden");
 
-    document.getElementById("viewPhone")
-      .textContent = data.phone || "未登録";
+    renderHospitalList();
 
-    document.getElementById("viewMemo")
-      .textContent = data.memo || "なし";
+  }
 
 
-    if (data.appointment) {
+  function renderHospitalList() {
+
+    const hospitals = getHospitals();
+
+    const list =
+      document.getElementById("hospitalList");
+
+    list.innerHTML = "";
+
+    document.getElementById("emptyView")
+      .classList.toggle(
+        "hidden",
+        hospitals.length > 0
+      );
+
+
+    hospitals.forEach(
+      function(hospital, index) {
+
+        const card =
+          document.createElement("div");
+
+        card.className =
+          "card hospital-card";
+
+        card.innerHTML = `
+          <div class="hospital-name">
+            🏥 ${escapeHtml(hospital.hospitalName)}
+          </div>
+
+          <div class="department">
+            ${escapeHtml(hospital.department || "")}
+          </div>
+
+          <div class="label">
+            診察券番号
+          </div>
+
+          <div class="value">
+            ${escapeHtml(hospital.cardNumber || "未登録")}
+          </div>
+        `;
+
+        card.onclick =
+          function() {
+            showDetail(index);
+          };
+
+        list.appendChild(card);
+
+      }
+    );
+
+  }
+
+
+  function showDetail(index) {
+
+    const hospitals = getHospitals();
+
+    const hospital = hospitals[index];
+
+    if (!hospital) return;
+
+    selectedIndex = index;
+
+    document.getElementById("detailHospitalName")
+      .textContent =
+      "🏥 " + hospital.hospitalName;
+
+    document.getElementById("detailDepartment")
+      .textContent =
+      hospital.department || "";
+
+    document.getElementById("detailCardNumber")
+      .textContent =
+      hospital.cardNumber || "未登録";
+
+    document.getElementById("detailHours")
+      .textContent =
+      hospital.hours || "未登録";
+
+    document.getElementById("detailClosed")
+      .textContent =
+      hospital.closed || "未登録";
+
+    document.getElementById("detailPhone")
+      .textContent =
+      hospital.phone || "未登録";
+
+    document.getElementById("detailMemo")
+      .textContent =
+      hospital.memo || "なし";
+
+
+    if (hospital.appointment) {
 
       const date =
-        new Date(data.appointment);
+        new Date(hospital.appointment);
 
-      document.getElementById("viewAppointment")
+      document.getElementById("detailAppointment")
         .textContent =
         date.toLocaleString(
           "ja-JP",
@@ -426,48 +434,240 @@
 
     } else {
 
-      document.getElementById("viewAppointment")
-        .textContent = "未登録";
+      document.getElementById("detailAppointment")
+        .textContent =
+        "未登録";
 
     }
 
 
-    document.getElementById("hospitalView")
+    document.getElementById("listView")
+      .classList.add("hidden");
+
+    document.getElementById("detailView")
       .classList.remove("hidden");
 
     document.getElementById("formView")
       .classList.add("hidden");
 
-    document.getElementById("emptyView")
+  }
+
+
+  function showForm() {
+
+    selectedIndex = null;
+
+    clearForm();
+
+    document.getElementById("formTitle")
+      .textContent =
+      "病院を登録";
+
+    document.getElementById("listView")
       .classList.add("hidden");
+
+    document.getElementById("detailView")
+      .classList.add("hidden");
+
+    document.getElementById("formView")
+      .classList.remove("hidden");
 
   }
 
 
-  function cancelForm() {
+  function editHospital() {
 
-    displayHospital();
+    const hospitals = getHospitals();
+
+    const hospital =
+      hospitals[selectedIndex];
+
+    if (!hospital) return;
+
+    document.getElementById("formTitle")
+      .textContent =
+      "病院情報を編集";
+
+    document.getElementById("hospitalName")
+      .value =
+      hospital.hospitalName || "";
+
+    document.getElementById("department")
+      .value =
+      hospital.department || "";
+
+    document.getElementById("cardNumber")
+      .value =
+      hospital.cardNumber || "";
+
+    document.getElementById("hours")
+      .value =
+      hospital.hours || "";
+
+    document.getElementById("closed")
+      .value =
+      hospital.closed || "";
+
+    document.getElementById("phone")
+      .value =
+      hospital.phone || "";
+
+    document.getElementById("appointment")
+      .value =
+      hospital.appointment || "";
+
+    document.getElementById("memo")
+      .value =
+      hospital.memo || "";
+
+
+    document.getElementById("detailView")
+      .classList.add("hidden");
+
+    document.getElementById("formView")
+      .classList.remove("hidden");
+
+  }
+
+
+  function saveHospital() {
+
+    const hospital = {
+
+      hospitalName:
+        document.getElementById("hospitalName")
+        .value.trim(),
+
+      department:
+        document.getElementById("department")
+        .value.trim(),
+
+      cardNumber:
+        document.getElementById("cardNumber")
+        .value.trim(),
+
+      hours:
+        document.getElementById("hours")
+        .value.trim(),
+
+      closed:
+        document.getElementById("closed")
+        .value.trim(),
+
+      phone:
+        document.getElementById("phone")
+        .value.trim(),
+
+      appointment:
+        document.getElementById("appointment")
+        .value,
+
+      memo:
+        document.getElementById("memo")
+        .value.trim()
+
+    };
+
+
+    if (!hospital.hospitalName) {
+
+      alert("病院名を入力してください。");
+
+      return;
+
+    }
+
+
+    const hospitals = getHospitals();
+
+
+    if (selectedIndex === null) {
+
+      hospitals.push(hospital);
+
+    } else {
+
+      hospitals[selectedIndex] =
+        hospital;
+
+    }
+
+
+    saveHospitals(hospitals);
+
+    showList();
 
   }
 
 
   function deleteHospital() {
 
+    if (selectedIndex === null) return;
+
     const answer =
       confirm(
-        "登録した病院情報を削除しますか？"
+        "この病院の登録情報を削除しますか？"
       );
 
     if (!answer) return;
 
-    localStorage.removeItem(STORAGE_KEY);
 
-    displayHospital();
+    const hospitals = getHospitals();
+
+    hospitals.splice(
+      selectedIndex,
+      1
+    );
+
+    saveHospitals(hospitals);
+
+    showList();
 
   }
 
 
-  displayHospital();
+  function cancelForm() {
+
+    if (selectedIndex !== null) {
+
+      showDetail(selectedIndex);
+
+    } else {
+
+      showList();
+
+    }
+
+  }
+
+
+  function clearForm() {
+
+    document.getElementById("hospitalName").value = "";
+    document.getElementById("department").value = "";
+    document.getElementById("cardNumber").value = "";
+    document.getElementById("hours").value = "";
+    document.getElementById("closed").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("appointment").value = "";
+    document.getElementById("memo").value = "";
+
+  }
+
+
+  function escapeHtml(text) {
+
+    const div =
+      document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+  }
+
+
+  showList();
 
 </script>
 
