@@ -56,7 +56,7 @@
 
     .department {
       color: #777;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .label {
@@ -132,7 +132,8 @@
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       width: 100%;
       padding: 13px;
       border: 1px solid #ccc;
@@ -140,11 +141,6 @@
       font-size: 16px;
       background: white;
       margin-bottom: 15px;
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
     }
 
     .empty {
@@ -181,6 +177,77 @@
       font-size: 14px;
       z-index: 100;
     }
+
+    .status {
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      line-height: 1.6;
+    }
+
+    .status.open {
+      background: #e8f7ed;
+      color: #16763a;
+    }
+
+    .status.wait {
+      background: #fff5d6;
+      color: #8a6500;
+    }
+
+    .status.closed {
+      background: #ffe9e9;
+      color: #b42323;
+    }
+
+    .status.unknown {
+      background: #eeeeee;
+      color: #555;
+    }
+
+    .schedule-day {
+      border-top: 1px solid #e5e5e5;
+      padding: 16px 0;
+    }
+
+    .schedule-day:first-child {
+      border-top: none;
+    }
+
+    .day-title {
+      font-weight: bold;
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    .closed-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .closed-check input {
+      width: auto;
+      margin: 0;
+    }
+
+    .time-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .time-row input {
+      margin: 0;
+    }
+
+    .schedule-display {
+      line-height: 1.8;
+    }
   </style>
 </head>
 
@@ -192,7 +259,6 @@
 
 <main>
 
-  <!-- 病院一覧 -->
   <div id="listView">
 
     <div id="hospitalList"></div>
@@ -211,7 +277,6 @@
   </div>
 
 
-  <!-- 病院詳細 -->
   <div id="detailView" class="hidden">
 
     <div class="back" onclick="showList()">
@@ -222,6 +287,10 @@
 
       <div class="hospital-name" id="detailHospitalName"></div>
       <div class="department" id="detailDepartment"></div>
+
+      <div id="receptionStatus" class="status unknown">
+        受付時間が設定されていません
+      </div>
 
       <div class="section">
         <div class="label">診察券番号</div>
@@ -238,8 +307,6 @@
         </div>
       </div>
 
-
-      <!-- 便利ボタン -->
       <div class="action-grid">
 
         <button id="phoneButton" onclick="callHospital()">
@@ -260,15 +327,9 @@
 
       </div>
 
-
       <div class="section">
-        <div class="label">受付時間</div>
-        <div class="value" id="detailHours"></div>
-      </div>
-
-      <div class="section">
-        <div class="label">休診日</div>
-        <div class="value" id="detailClosed"></div>
+        <div class="label">通常の受付時間</div>
+        <div class="value schedule-display" id="detailSchedule"></div>
       </div>
 
       <div class="section">
@@ -300,7 +361,6 @@
   </div>
 
 
-  <!-- 登録・編集画面 -->
   <div id="formView" class="hidden">
 
     <div class="back" onclick="cancelForm()">
@@ -312,49 +372,19 @@
       <h2 id="formTitle">病院を登録</h2>
 
       <div class="label">病院名</div>
-      <input
-        id="hospitalName"
-        type="text"
-        placeholder="例：〇〇眼科">
+      <input id="hospitalName" type="text" placeholder="例：〇〇眼科">
 
       <div class="label">診療科</div>
-      <input
-        id="department"
-        type="text"
-        placeholder="例：眼科">
+      <input id="department" type="text" placeholder="例：眼科">
 
       <div class="label">診察券番号</div>
-      <input
-        id="cardNumber"
-        type="text"
-        inputmode="numeric"
-        placeholder="例：12345678">
-
-      <div class="label">受付時間</div>
-      <textarea
-        id="hours"
-        placeholder="例：
-月・火・木・金
-8:30〜12:30
-14:00〜17:30"></textarea>
-
-      <div class="label">休診日</div>
-      <input
-        id="closed"
-        type="text"
-        placeholder="例：水曜・日曜・祝日">
+      <input id="cardNumber" type="text" inputmode="numeric">
 
       <div class="label">電話番号</div>
-      <input
-        id="phone"
-        type="tel"
-        placeholder="例：096-000-0000">
+      <input id="phone" type="tel" placeholder="例：096-000-0000">
 
       <div class="label">住所</div>
-      <input
-        id="address"
-        type="text"
-        placeholder="例：熊本県熊本市〇〇">
+      <input id="address" type="text" placeholder="例：熊本県熊本市〇〇">
 
       <div class="label">Webサイト</div>
       <input
@@ -362,655 +392,1128 @@
         type="url"
         inputmode="url"
         autocapitalize="none"
-        placeholder="例：https://example.com">
+        placeholder="https://example.com">
 
       <div class="label">次回予約</div>
-      <input
-        id="appointment"
-        type="datetime-local">
+      <input id="appointment" type="datetime-local">
 
       <div class="label">メモ</div>
-      <textarea
-        id="memo"
-        placeholder="診察時に聞きたいことなど"></textarea>
-
-      <button onclick="saveHospital()">
-        💾 保存する
-      </button>
-
-      <button
-        class="secondary"
-        onclick="cancelForm()">
-        キャンセル
-      </button>
+      <textarea id="memo"></textarea>
 
     </div>
+
+
+    <div class="card">
+
+      <h2>通常の受付時間</h2>
+
+      <p style="color:#777; line-height:1.6;">
+        曜日ごとに受付時間を設定します。
+        休診日は「休診」にチェックしてください。
+      </p>
+
+      <div id="scheduleForm"></div>
+
+    </div>
+
+
+    <button onclick="saveHospital()">
+      💾 保存する
+    </button>
+
+    <button class="secondary" onclick="cancelForm()">
+      キャンセル
+    </button>
 
   </div>
 
 </main>
-
 
 <div id="toast" class="toast hidden"></div>
 
 
 <script>
 
-  const STORAGE_KEY = "hospitalMemoList";
+const STORAGE_KEY = "hospitalMemoList";
 
-  let selectedIndex = null;
+const dayNames = [
+  "日曜日",
+  "月曜日",
+  "火曜日",
+  "水曜日",
+  "木曜日",
+  "金曜日",
+  "土曜日"
+];
+
+let selectedIndex = null;
 
 
-  function getHospitals() {
+function getHospitals() {
 
-    const saved =
-      localStorage.getItem(STORAGE_KEY);
+  const saved =
+    localStorage.getItem(STORAGE_KEY);
 
-    if (!saved) return [];
+  if (!saved) return [];
 
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return [];
-    }
-
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return [];
   }
 
+}
 
-  function saveHospitals(hospitals) {
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(hospitals)
+function saveHospitals(hospitals) {
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(hospitals)
+  );
+
+}
+
+
+function createEmptySchedule() {
+
+  return dayNames.map(function() {
+
+    return {
+      closed: false,
+      morningStart: "",
+      morningEnd: "",
+      afternoonStart: "",
+      afternoonEnd: ""
+    };
+
+  });
+
+}
+
+
+function createScheduleForm(schedule) {
+
+  const container =
+    document.getElementById("scheduleForm");
+
+  container.innerHTML = "";
+
+  dayNames.forEach(function(dayName, index) {
+
+    const day =
+      schedule[index] || {};
+
+    const div =
+      document.createElement("div");
+
+    div.className = "schedule-day";
+
+    div.innerHTML = `
+      <div class="day-title">
+        ${dayName}
+      </div>
+
+      <label class="closed-check">
+        <input
+          type="checkbox"
+          id="closed-${index}"
+          ${day.closed ? "checked" : ""}
+          onchange="toggleDay(${index})">
+        休診
+      </label>
+
+      <div id="times-${index}">
+
+        <div class="label">午前</div>
+
+        <div class="time-row">
+          <input
+            type="time"
+            id="morningStart-${index}"
+            value="${day.morningStart || ""}">
+
+          <span>〜</span>
+
+          <input
+            type="time"
+            id="morningEnd-${index}"
+            value="${day.morningEnd || ""}">
+        </div>
+
+        <div class="label" style="margin-top:12px;">
+          午後
+        </div>
+
+        <div class="time-row">
+          <input
+            type="time"
+            id="afternoonStart-${index}"
+            value="${day.afternoonStart || ""}">
+
+          <span>〜</span>
+
+          <input
+            type="time"
+            id="afternoonEnd-${index}"
+            value="${day.afternoonEnd || ""}">
+        </div>
+
+      </div>
+    `;
+
+    container.appendChild(div);
+
+    toggleDay(index);
+
+  });
+
+}
+
+
+function toggleDay(index) {
+
+  const closed =
+    document.getElementById(
+      "closed-" + index
     );
 
-  }
-
-
-  function showList() {
-
-    selectedIndex = null;
-
-    document.getElementById("listView")
-      .classList.remove("hidden");
-
-    document.getElementById("detailView")
-      .classList.add("hidden");
-
-    document.getElementById("formView")
-      .classList.add("hidden");
-
-    renderHospitalList();
-
-  }
-
-
-  function renderHospitalList() {
-
-    const hospitals = getHospitals();
-
-    const list =
-      document.getElementById("hospitalList");
-
-    list.innerHTML = "";
-
-    document.getElementById("emptyView")
-      .classList.toggle(
-        "hidden",
-        hospitals.length > 0
-      );
-
-
-    hospitals.forEach(function(hospital, index) {
-
-      const card =
-        document.createElement("div");
-
-      card.className =
-        "card hospital-card";
-
-      const name =
-        document.createElement("div");
-
-      name.className =
-        "hospital-name";
-
-      name.textContent =
-        "🏥 " + hospital.hospitalName;
-
-
-      const department =
-        document.createElement("div");
-
-      department.className =
-        "department";
-
-      department.textContent =
-        hospital.department || "";
-
-
-      const label =
-        document.createElement("div");
-
-      label.className = "label";
-      label.textContent = "診察券番号";
-
-
-      const number =
-        document.createElement("div");
-
-      number.className = "value";
-
-      number.textContent =
-        hospital.cardNumber || "未登録";
-
-
-      card.appendChild(name);
-      card.appendChild(department);
-      card.appendChild(label);
-      card.appendChild(number);
-
-
-      card.onclick = function() {
-        showDetail(index);
-      };
-
-
-      list.appendChild(card);
-
-    });
-
-  }
-
-
-  function showDetail(index) {
-
-    const hospitals = getHospitals();
-    const hospital = hospitals[index];
-
-    if (!hospital) return;
-
-    selectedIndex = index;
-
-
-    document.getElementById("detailHospitalName")
-      .textContent =
-      "🏥 " + hospital.hospitalName;
-
-    document.getElementById("detailDepartment")
-      .textContent =
-      hospital.department || "";
-
-    document.getElementById("detailCardNumber")
-      .textContent =
-      hospital.cardNumber || "未登録";
-
-    document.getElementById("detailHours")
-      .textContent =
-      hospital.hours || "未登録";
-
-    document.getElementById("detailClosed")
-      .textContent =
-      hospital.closed || "未登録";
-
-    document.getElementById("detailPhone")
-      .textContent =
-      hospital.phone || "未登録";
-
-    document.getElementById("detailAddress")
-      .textContent =
-      hospital.address || "未登録";
-
-    document.getElementById("detailMemo")
-      .textContent =
-      hospital.memo || "なし";
-
-
-    if (hospital.appointment) {
-
-      const date =
-        new Date(hospital.appointment);
-
-      document.getElementById("detailAppointment")
-        .textContent =
-        date.toLocaleString(
-          "ja-JP",
-          {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          }
-        );
-
-    } else {
-
-      document.getElementById("detailAppointment")
-        .textContent = "未登録";
-
-    }
-
-
-    setButtonState(
-      "phoneButton",
-      hospital.phone
+  const times =
+    document.getElementById(
+      "times-" + index
     );
 
-    setButtonState(
-      "mapButton",
-      hospital.address || hospital.hospitalName
-    );
+  if (!closed || !times) return;
 
-    setButtonState(
-      "webButton",
-      hospital.website
-    );
+  times.style.display =
+    closed.checked ? "none" : "block";
 
-    setButtonState(
-      "copyButton",
-      hospital.cardNumber
-    );
+}
 
 
-    document.getElementById("listView")
-      .classList.add("hidden");
+function readScheduleForm() {
 
-    document.getElementById("detailView")
-      .classList.remove("hidden");
+  return dayNames.map(function(_, index) {
 
-    document.getElementById("formView")
-      .classList.add("hidden");
-
-  }
-
-
-  function setButtonState(id, available) {
-
-    const button =
-      document.getElementById(id);
-
-    button.disabled = !available;
-
-    button.classList.toggle(
-      "unavailable",
-      !available
-    );
-
-  }
-
-
-  function showForm() {
-
-    selectedIndex = null;
-
-    clearForm();
-
-    document.getElementById("formTitle")
-      .textContent = "病院を登録";
-
-    document.getElementById("listView")
-      .classList.add("hidden");
-
-    document.getElementById("detailView")
-      .classList.add("hidden");
-
-    document.getElementById("formView")
-      .classList.remove("hidden");
-
-  }
-
-
-  function editHospital() {
-
-    const hospitals = getHospitals();
-    const hospital = hospitals[selectedIndex];
-
-    if (!hospital) return;
-
-
-    document.getElementById("formTitle")
-      .textContent = "病院情報を編集";
-
-    document.getElementById("hospitalName")
-      .value =
-      hospital.hospitalName || "";
-
-    document.getElementById("department")
-      .value =
-      hospital.department || "";
-
-    document.getElementById("cardNumber")
-      .value =
-      hospital.cardNumber || "";
-
-    document.getElementById("hours")
-      .value =
-      hospital.hours || "";
-
-    document.getElementById("closed")
-      .value =
-      hospital.closed || "";
-
-    document.getElementById("phone")
-      .value =
-      hospital.phone || "";
-
-    document.getElementById("address")
-      .value =
-      hospital.address || "";
-
-    document.getElementById("website")
-      .value =
-      hospital.website || "";
-
-    document.getElementById("appointment")
-      .value =
-      hospital.appointment || "";
-
-    document.getElementById("memo")
-      .value =
-      hospital.memo || "";
-
-
-    document.getElementById("detailView")
-      .classList.add("hidden");
-
-    document.getElementById("formView")
-      .classList.remove("hidden");
-
-  }
-
-
-  function saveHospital() {
-
-    const hospital = {
-
-      hospitalName:
-        document.getElementById("hospitalName")
-        .value.trim(),
-
-      department:
-        document.getElementById("department")
-        .value.trim(),
-
-      cardNumber:
-        document.getElementById("cardNumber")
-        .value.trim(),
-
-      hours:
-        document.getElementById("hours")
-        .value.trim(),
+    return {
 
       closed:
-        document.getElementById("closed")
-        .value.trim(),
+        document.getElementById(
+          "closed-" + index
+        ).checked,
 
-      phone:
-        document.getElementById("phone")
-        .value.trim(),
+      morningStart:
+        document.getElementById(
+          "morningStart-" + index
+        ).value,
 
-      address:
-        document.getElementById("address")
-        .value.trim(),
+      morningEnd:
+        document.getElementById(
+          "morningEnd-" + index
+        ).value,
 
-      website:
-        document.getElementById("website")
-        .value.trim(),
+      afternoonStart:
+        document.getElementById(
+          "afternoonStart-" + index
+        ).value,
 
-      appointment:
-        document.getElementById("appointment")
-        .value,
-
-      memo:
-        document.getElementById("memo")
-        .value.trim()
+      afternoonEnd:
+        document.getElementById(
+          "afternoonEnd-" + index
+        ).value
 
     };
 
+  });
 
-    if (!hospital.hospitalName) {
-
-      alert("病院名を入力してください。");
-      return;
-
-    }
+}
 
 
-    if (
-      hospital.website &&
-      !hospital.website.startsWith("http://") &&
-      !hospital.website.startsWith("https://")
-    ) {
+function showList() {
 
-      hospital.website =
-        "https://" + hospital.website;
+  selectedIndex = null;
 
-    }
+  document.getElementById("listView")
+    .classList.remove("hidden");
 
+  document.getElementById("detailView")
+    .classList.add("hidden");
 
-    const hospitals = getHospitals();
+  document.getElementById("formView")
+    .classList.add("hidden");
 
+  renderHospitalList();
 
-    if (selectedIndex === null) {
-
-      hospitals.push(hospital);
-
-    } else {
-
-      hospitals[selectedIndex] =
-        hospital;
-
-    }
+}
 
 
-    saveHospitals(hospitals);
+function renderHospitalList() {
 
-    showList();
+  const hospitals = getHospitals();
 
-  }
+  const list =
+    document.getElementById("hospitalList");
 
+  list.innerHTML = "";
 
-  function deleteHospital() {
-
-    if (selectedIndex === null) return;
-
-    const answer =
-      confirm(
-        "この病院の登録情報を削除しますか？"
-      );
-
-    if (!answer) return;
-
-
-    const hospitals = getHospitals();
-
-    hospitals.splice(
-      selectedIndex,
-      1
+  document.getElementById("emptyView")
+    .classList.toggle(
+      "hidden",
+      hospitals.length > 0
     );
 
-    saveHospitals(hospitals);
 
-    showList();
+  hospitals.forEach(function(hospital, index) {
 
-  }
+    const card =
+      document.createElement("div");
 
-
-  function cancelForm() {
-
-    if (selectedIndex !== null) {
-
-      showDetail(selectedIndex);
-
-    } else {
-
-      showList();
-
-    }
-
-  }
+    card.className =
+      "card hospital-card";
 
 
-  function clearForm() {
+    const name =
+      document.createElement("div");
 
-    document.getElementById("hospitalName").value = "";
-    document.getElementById("department").value = "";
-    document.getElementById("cardNumber").value = "";
-    document.getElementById("hours").value = "";
-    document.getElementById("closed").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("address").value = "";
-    document.getElementById("website").value = "";
-    document.getElementById("appointment").value = "";
-    document.getElementById("memo").value = "";
+    name.className =
+      "hospital-name";
 
-  }
+    name.textContent =
+      "🏥 " + hospital.hospitalName;
 
 
-  function getSelectedHospital() {
+    const department =
+      document.createElement("div");
 
-    const hospitals = getHospitals();
+    department.className =
+      "department";
 
-    if (selectedIndex === null) return null;
-
-    return hospitals[selectedIndex] || null;
-
-  }
-
-
-  async function copyCardNumber() {
-
-    const hospital =
-      getSelectedHospital();
-
-    if (
-      !hospital ||
-      !hospital.cardNumber
-    ) return;
+    department.textContent =
+      hospital.department || "";
 
 
-    try {
+    const label =
+      document.createElement("div");
 
-      await navigator.clipboard.writeText(
-        hospital.cardNumber
+    label.className = "label";
+
+    label.textContent =
+      "診察券番号";
+
+
+    const number =
+      document.createElement("div");
+
+    number.className = "value";
+
+    number.textContent =
+      hospital.cardNumber || "未登録";
+
+
+    card.appendChild(name);
+    card.appendChild(department);
+    card.appendChild(label);
+    card.appendChild(number);
+
+
+    card.onclick = function() {
+      showDetail(index);
+    };
+
+
+    list.appendChild(card);
+
+  });
+
+}
+
+
+function showDetail(index) {
+
+  const hospitals = getHospitals();
+
+  const hospital =
+    hospitals[index];
+
+  if (!hospital) return;
+
+  selectedIndex = index;
+
+
+  document.getElementById("detailHospitalName")
+    .textContent =
+    "🏥 " + hospital.hospitalName;
+
+  document.getElementById("detailDepartment")
+    .textContent =
+    hospital.department || "";
+
+  document.getElementById("detailCardNumber")
+    .textContent =
+    hospital.cardNumber || "未登録";
+
+  document.getElementById("detailPhone")
+    .textContent =
+    hospital.phone || "未登録";
+
+  document.getElementById("detailAddress")
+    .textContent =
+    hospital.address || "未登録";
+
+  document.getElementById("detailMemo")
+    .textContent =
+    hospital.memo || "なし";
+
+
+  if (hospital.appointment) {
+
+    const date =
+      new Date(hospital.appointment);
+
+    document.getElementById("detailAppointment")
+      .textContent =
+      date.toLocaleString(
+        "ja-JP",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }
       );
 
-      showToast(
-        "診察券番号をコピーしました"
-      );
+  } else {
 
-    } catch {
-
-      const textarea =
-        document.createElement("textarea");
-
-      textarea.value =
-        hospital.cardNumber;
-
-      document.body.appendChild(textarea);
-
-      textarea.select();
-
-      document.execCommand("copy");
-
-      textarea.remove();
-
-      showToast(
-        "診察券番号をコピーしました"
-      );
-
-    }
+    document.getElementById("detailAppointment")
+      .textContent =
+      "未登録";
 
   }
 
 
-  function callHospital() {
+  displaySchedule(hospital);
 
-    const hospital =
-      getSelectedHospital();
-
-    if (
-      !hospital ||
-      !hospital.phone
-    ) return;
+  updateReceptionStatus(hospital);
 
 
-    const phone =
-      hospital.phone.replace(
-        /[^0-9+]/g,
-        ""
-      );
+  setButtonState(
+    "phoneButton",
+    hospital.phone
+  );
 
-    window.location.href =
-      "tel:" + phone;
+  setButtonState(
+    "mapButton",
+    hospital.address || hospital.hospitalName
+  );
 
-  }
+  setButtonState(
+    "webButton",
+    hospital.website
+  );
 
-
-  function openMap() {
-
-    const hospital =
-      getSelectedHospital();
-
-    if (!hospital) return;
-
-
-    const destination =
-      hospital.address
-      ? hospital.hospitalName + " " + hospital.address
-      : hospital.hospitalName;
+  setButtonState(
+    "copyButton",
+    hospital.cardNumber
+  );
 
 
-    window.location.href =
-      "https://maps.apple.com/?q=" +
-      encodeURIComponent(destination);
+  document.getElementById("listView")
+    .classList.add("hidden");
 
-  }
+  document.getElementById("detailView")
+    .classList.remove("hidden");
 
+  document.getElementById("formView")
+    .classList.add("hidden");
 
-  function openWebsite() {
-
-    const hospital =
-      getSelectedHospital();
-
-    if (
-      !hospital ||
-      !hospital.website
-    ) return;
+}
 
 
-    window.open(
-      hospital.website,
-      "_blank"
+function displaySchedule(hospital) {
+
+  const target =
+    document.getElementById(
+      "detailSchedule"
     );
 
+  if (
+    !hospital.schedule ||
+    !Array.isArray(hospital.schedule)
+  ) {
+
+    target.textContent =
+      hospital.hours ||
+      "未設定";
+
+    return;
+
   }
 
 
-  function showToast(message) {
+  let text = "";
 
-    const toast =
-      document.getElementById("toast");
+  hospital.schedule.forEach(
+    function(day, index) {
 
-    toast.textContent = message;
+      text += dayNames[index] + "　";
 
-    toast.classList.remove("hidden");
+      if (day.closed) {
+
+        text += "休診\n";
+        return;
+
+      }
 
 
-    setTimeout(
-      function() {
+      const sessions = [];
 
-        toast.classList.add("hidden");
 
-      },
-      1800
+      if (
+        day.morningStart &&
+        day.morningEnd
+      ) {
+
+        sessions.push(
+          day.morningStart +
+          "〜" +
+          day.morningEnd
+        );
+
+      }
+
+
+      if (
+        day.afternoonStart &&
+        day.afternoonEnd
+      ) {
+
+        sessions.push(
+          day.afternoonStart +
+          "〜" +
+          day.afternoonEnd
+        );
+
+      }
+
+
+      text +=
+        sessions.length
+        ? sessions.join(" / ")
+        : "設定なし";
+
+      text += "\n";
+
+    }
+  );
+
+
+  target.textContent = text;
+
+}
+
+
+function updateReceptionStatus(hospital) {
+
+  const box =
+    document.getElementById(
+      "receptionStatus"
     );
 
+
+  box.className =
+    "status unknown";
+
+
+  if (
+    !hospital.schedule ||
+    !Array.isArray(hospital.schedule)
+  ) {
+
+    box.textContent =
+      "受付時間が設定されていません";
+
+    return;
+
   }
 
+
+  const now = new Date();
+
+  const dayIndex =
+    now.getDay();
+
+  const today =
+    hospital.schedule[dayIndex];
+
+
+  if (!today) {
+
+    box.textContent =
+      "受付時間が設定されていません";
+
+    return;
+
+  }
+
+
+  if (today.closed) {
+
+    box.className =
+      "status closed";
+
+    box.textContent =
+      "🔴 本日は休診です";
+
+    return;
+
+  }
+
+
+  const current =
+    now.getHours() * 60 +
+    now.getMinutes();
+
+
+  const morningStart =
+    timeToMinutes(
+      today.morningStart
+    );
+
+  const morningEnd =
+    timeToMinutes(
+      today.morningEnd
+    );
+
+  const afternoonStart =
+    timeToMinutes(
+      today.afternoonStart
+    );
+
+  const afternoonEnd =
+    timeToMinutes(
+      today.afternoonEnd
+    );
+
+
+  if (
+    morningStart !== null &&
+    morningEnd !== null &&
+    current >= morningStart &&
+    current <= morningEnd
+  ) {
+
+    box.className =
+      "status open";
+
+    box.textContent =
+      "🟢 現在受付時間内です\n午前の受付は " +
+      today.morningEnd +
+      " まで";
+
+    return;
+
+  }
+
+
+  if (
+    afternoonStart !== null &&
+    afternoonEnd !== null &&
+    current >= afternoonStart &&
+    current <= afternoonEnd
+  ) {
+
+    box.className =
+      "status open";
+
+    box.textContent =
+      "🟢 現在受付時間内です\n午後の受付は " +
+      today.afternoonEnd +
+      " まで";
+
+    return;
+
+  }
+
+
+  if (
+    morningStart !== null &&
+    current < morningStart
+  ) {
+
+    box.className =
+      "status wait";
+
+    box.textContent =
+      "🟡 受付開始前です\n午前は " +
+      today.morningStart +
+      " から";
+
+    return;
+
+  }
+
+
+  if (
+    afternoonStart !== null &&
+    current < afternoonStart
+  ) {
+
+    box.className =
+      "status wait";
+
+    box.textContent =
+      "🟡 現在は受付時間外です\n午後は " +
+      today.afternoonStart +
+      " から";
+
+    return;
+
+  }
+
+
+  box.className =
+    "status closed";
+
+  box.textContent =
+    "🔴 本日の受付は終了しました";
+
+}
+
+
+function timeToMinutes(time) {
+
+  if (!time) return null;
+
+  const parts =
+    time.split(":");
+
+  return (
+    Number(parts[0]) * 60 +
+    Number(parts[1])
+  );
+
+}
+
+
+function setButtonState(id, available) {
+
+  const button =
+    document.getElementById(id);
+
+  button.disabled = !available;
+
+  button.classList.toggle(
+    "unavailable",
+    !available
+  );
+
+}
+
+
+function showForm() {
+
+  selectedIndex = null;
+
+  clearForm();
+
+  document.getElementById("formTitle")
+    .textContent =
+    "病院を登録";
+
+  createScheduleForm(
+    createEmptySchedule()
+  );
+
+  document.getElementById("listView")
+    .classList.add("hidden");
+
+  document.getElementById("detailView")
+    .classList.add("hidden");
+
+  document.getElementById("formView")
+    .classList.remove("hidden");
+
+}
+
+
+function editHospital() {
+
+  const hospitals = getHospitals();
+
+  const hospital =
+    hospitals[selectedIndex];
+
+  if (!hospital) return;
+
+
+  document.getElementById("formTitle")
+    .textContent =
+    "病院情報を編集";
+
+
+  document.getElementById("hospitalName")
+    .value =
+    hospital.hospitalName || "";
+
+  document.getElementById("department")
+    .value =
+    hospital.department || "";
+
+  document.getElementById("cardNumber")
+    .value =
+    hospital.cardNumber || "";
+
+  document.getElementById("phone")
+    .value =
+    hospital.phone || "";
+
+  document.getElementById("address")
+    .value =
+    hospital.address || "";
+
+  document.getElementById("website")
+    .value =
+    hospital.website || "";
+
+  document.getElementById("appointment")
+    .value =
+    hospital.appointment || "";
+
+  document.getElementById("memo")
+    .value =
+    hospital.memo || "";
+
+
+  createScheduleForm(
+    hospital.schedule ||
+    createEmptySchedule()
+  );
+
+
+  document.getElementById("detailView")
+    .classList.add("hidden");
+
+  document.getElementById("formView")
+    .classList.remove("hidden");
+
+}
+
+
+function saveHospital() {
+
+  const hospital = {
+
+    hospitalName:
+      document.getElementById("hospitalName")
+      .value.trim(),
+
+    department:
+      document.getElementById("department")
+      .value.trim(),
+
+    cardNumber:
+      document.getElementById("cardNumber")
+      .value.trim(),
+
+    phone:
+      document.getElementById("phone")
+      .value.trim(),
+
+    address:
+      document.getElementById("address")
+      .value.trim(),
+
+    website:
+      document.getElementById("website")
+      .value.trim(),
+
+    appointment:
+      document.getElementById("appointment")
+      .value,
+
+    memo:
+      document.getElementById("memo")
+      .value.trim(),
+
+    schedule:
+      readScheduleForm()
+
+  };
+
+
+  if (!hospital.hospitalName) {
+
+    alert(
+      "病院名を入力してください。"
+    );
+
+    return;
+
+  }
+
+
+  if (
+    hospital.website &&
+    !hospital.website.startsWith("http://") &&
+    !hospital.website.startsWith("https://")
+  ) {
+
+    hospital.website =
+      "https://" +
+      hospital.website;
+
+  }
+
+
+  const hospitals =
+    getHospitals();
+
+
+  if (selectedIndex === null) {
+
+    hospitals.push(hospital);
+
+  } else {
+
+    const oldHospital =
+      hospitals[selectedIndex];
+
+    hospitals[selectedIndex] = {
+      ...oldHospital,
+      ...hospital
+    };
+
+  }
+
+
+  saveHospitals(hospitals);
 
   showList();
+
+}
+
+
+function deleteHospital() {
+
+  if (selectedIndex === null) return;
+
+  const answer =
+    confirm(
+      "この病院の登録情報を削除しますか？"
+    );
+
+  if (!answer) return;
+
+
+  const hospitals =
+    getHospitals();
+
+  hospitals.splice(
+    selectedIndex,
+    1
+  );
+
+  saveHospitals(hospitals);
+
+  showList();
+
+}
+
+
+function cancelForm() {
+
+  if (selectedIndex !== null) {
+
+    showDetail(selectedIndex);
+
+  } else {
+
+    showList();
+
+  }
+
+}
+
+
+function clearForm() {
+
+  document.getElementById("hospitalName").value = "";
+  document.getElementById("department").value = "";
+  document.getElementById("cardNumber").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("address").value = "";
+  document.getElementById("website").value = "";
+  document.getElementById("appointment").value = "";
+  document.getElementById("memo").value = "";
+
+}
+
+
+function getSelectedHospital() {
+
+  const hospitals =
+    getHospitals();
+
+  if (
+    selectedIndex === null
+  ) return null;
+
+  return (
+    hospitals[selectedIndex] ||
+    null
+  );
+
+}
+
+
+async function copyCardNumber() {
+
+  const hospital =
+    getSelectedHospital();
+
+  if (
+    !hospital ||
+    !hospital.cardNumber
+  ) return;
+
+
+  try {
+
+    await navigator.clipboard.writeText(
+      hospital.cardNumber
+    );
+
+    showToast(
+      "診察券番号をコピーしました"
+    );
+
+  } catch {
+
+    const textarea =
+      document.createElement("textarea");
+
+    textarea.value =
+      hospital.cardNumber;
+
+    document.body.appendChild(
+      textarea
+    );
+
+    textarea.select();
+
+    document.execCommand(
+      "copy"
+    );
+
+    textarea.remove();
+
+    showToast(
+      "診察券番号をコピーしました"
+    );
+
+  }
+
+}
+
+
+function callHospital() {
+
+  const hospital =
+    getSelectedHospital();
+
+  if (
+    !hospital ||
+    !hospital.phone
+  ) return;
+
+
+  const phone =
+    hospital.phone.replace(
+      /[^0-9+]/g,
+      ""
+    );
+
+  window.location.href =
+    "tel:" + phone;
+
+}
+
+
+function openMap() {
+
+  const hospital =
+    getSelectedHospital();
+
+  if (!hospital) return;
+
+
+  const destination =
+    hospital.address
+    ? hospital.hospitalName +
+      " " +
+      hospital.address
+    : hospital.hospitalName;
+
+
+  window.location.href =
+    "https://maps.apple.com/?q=" +
+    encodeURIComponent(
+      destination
+    );
+
+}
+
+
+function openWebsite() {
+
+  const hospital =
+    getSelectedHospital();
+
+  if (
+    !hospital ||
+    !hospital.website
+  ) return;
+
+
+  window.open(
+    hospital.website,
+    "_blank"
+  );
+
+}
+
+
+function showToast(message) {
+
+  const toast =
+    document.getElementById(
+      "toast"
+    );
+
+  toast.textContent =
+    message;
+
+  toast.classList.remove(
+    "hidden"
+  );
+
+
+  setTimeout(
+    function() {
+
+      toast.classList.add(
+        "hidden"
+      );
+
+    },
+    1800
+  );
+
+}
+
+
+showList();
 
 </script>
 
