@@ -56,7 +56,7 @@
 
     .department {
       color: #777;
-      margin-bottom: 12px;
+      margin-bottom: 18px;
     }
 
     .label {
@@ -69,6 +69,7 @@
       font-size: 17px;
       line-height: 1.6;
       white-space: pre-line;
+      overflow-wrap: anywhere;
     }
 
     .number {
@@ -102,6 +103,34 @@
       color: #d00;
     }
 
+    button.copy {
+      width: auto;
+      padding: 8px 12px;
+      margin: 0 0 0 8px;
+      font-size: 14px;
+      background: #e8f1ff;
+      color: #007aff;
+    }
+
+    .card-number-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .action-grid button {
+      margin: 0;
+      min-height: 54px;
+    }
+
     input,
     textarea {
       width: 100%;
@@ -115,6 +144,7 @@
 
     textarea {
       min-height: 90px;
+      resize: vertical;
     }
 
     .empty {
@@ -125,7 +155,7 @@
     }
 
     .hidden {
-      display: none;
+      display: none !important;
     }
 
     .back {
@@ -133,6 +163,23 @@
       margin-bottom: 18px;
       font-weight: bold;
       cursor: pointer;
+    }
+
+    .unavailable {
+      opacity: 0.4;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 35px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      z-index: 100;
     }
   </style>
 </head>
@@ -145,7 +192,7 @@
 
 <main>
 
-  <!-- 一覧画面 -->
+  <!-- 病院一覧 -->
   <div id="listView">
 
     <div id="hospitalList"></div>
@@ -164,7 +211,7 @@
   </div>
 
 
-  <!-- 詳細画面 -->
+  <!-- 病院詳細 -->
   <div id="detailView" class="hidden">
 
     <div class="back" onclick="showList()">
@@ -178,8 +225,41 @@
 
       <div class="section">
         <div class="label">診察券番号</div>
-        <div class="value number" id="detailCardNumber"></div>
+
+        <div class="card-number-row">
+          <div class="value number" id="detailCardNumber"></div>
+
+          <button
+            class="copy"
+            id="copyButton"
+            onclick="copyCardNumber()">
+            コピー
+          </button>
+        </div>
       </div>
+
+
+      <!-- 便利ボタン -->
+      <div class="action-grid">
+
+        <button id="phoneButton" onclick="callHospital()">
+          📞 電話
+        </button>
+
+        <button id="mapButton" onclick="openMap()">
+          🗺 地図
+        </button>
+
+        <button id="webButton" onclick="openWebsite()">
+          🌐 Webサイト
+        </button>
+
+        <button onclick="editHospital()">
+          ✏️ 編集
+        </button>
+
+      </div>
+
 
       <div class="section">
         <div class="label">受付時間</div>
@@ -197,6 +277,11 @@
       </div>
 
       <div class="section">
+        <div class="label">住所</div>
+        <div class="value" id="detailAddress"></div>
+      </div>
+
+      <div class="section">
         <div class="label">次回予約</div>
         <div class="value" id="detailAppointment"></div>
       </div>
@@ -205,10 +290,6 @@
         <div class="label">メモ</div>
         <div class="value" id="detailMemo"></div>
       </div>
-
-      <button onclick="editHospital()">
-        ✏️ 編集
-      </button>
 
       <button class="danger" onclick="deleteHospital()">
         登録情報を削除
@@ -231,37 +312,75 @@
       <h2 id="formTitle">病院を登録</h2>
 
       <div class="label">病院名</div>
-      <input id="hospitalName" type="text" placeholder="例：〇〇眼科">
+      <input
+        id="hospitalName"
+        type="text"
+        placeholder="例：〇〇眼科">
 
       <div class="label">診療科</div>
-      <input id="department" type="text" placeholder="例：眼科">
+      <input
+        id="department"
+        type="text"
+        placeholder="例：眼科">
 
       <div class="label">診察券番号</div>
-      <input id="cardNumber" type="text" inputmode="numeric">
+      <input
+        id="cardNumber"
+        type="text"
+        inputmode="numeric"
+        placeholder="例：12345678">
 
       <div class="label">受付時間</div>
-      <textarea id="hours" placeholder="例：
+      <textarea
+        id="hours"
+        placeholder="例：
 月・火・木・金
 8:30〜12:30
 14:00〜17:30"></textarea>
 
       <div class="label">休診日</div>
-      <input id="closed" type="text" placeholder="例：水曜・日曜・祝日">
+      <input
+        id="closed"
+        type="text"
+        placeholder="例：水曜・日曜・祝日">
 
       <div class="label">電話番号</div>
-      <input id="phone" type="tel" placeholder="例：096-000-0000">
+      <input
+        id="phone"
+        type="tel"
+        placeholder="例：096-000-0000">
+
+      <div class="label">住所</div>
+      <input
+        id="address"
+        type="text"
+        placeholder="例：熊本県熊本市〇〇">
+
+      <div class="label">Webサイト</div>
+      <input
+        id="website"
+        type="url"
+        inputmode="url"
+        autocapitalize="none"
+        placeholder="例：https://example.com">
 
       <div class="label">次回予約</div>
-      <input id="appointment" type="datetime-local">
+      <input
+        id="appointment"
+        type="datetime-local">
 
       <div class="label">メモ</div>
-      <textarea id="memo"></textarea>
+      <textarea
+        id="memo"
+        placeholder="診察時に聞きたいことなど"></textarea>
 
       <button onclick="saveHospital()">
         💾 保存する
       </button>
 
-      <button class="secondary" onclick="cancelForm()">
+      <button
+        class="secondary"
+        onclick="cancelForm()">
         キャンセル
       </button>
 
@@ -270,6 +389,9 @@
   </div>
 
 </main>
+
+
+<div id="toast" class="toast hidden"></div>
 
 
 <script>
@@ -286,7 +408,11 @@
 
     if (!saved) return [];
 
-    return JSON.parse(saved);
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return [];
+    }
 
   }
 
@@ -335,42 +461,64 @@
       );
 
 
-    hospitals.forEach(
-      function(hospital, index) {
+    hospitals.forEach(function(hospital, index) {
 
-        const card =
-          document.createElement("div");
+      const card =
+        document.createElement("div");
 
-        card.className =
-          "card hospital-card";
+      card.className =
+        "card hospital-card";
 
-        card.innerHTML = `
-          <div class="hospital-name">
-            🏥 ${escapeHtml(hospital.hospitalName)}
-          </div>
+      const name =
+        document.createElement("div");
 
-          <div class="department">
-            ${escapeHtml(hospital.department || "")}
-          </div>
+      name.className =
+        "hospital-name";
 
-          <div class="label">
-            診察券番号
-          </div>
+      name.textContent =
+        "🏥 " + hospital.hospitalName;
 
-          <div class="value">
-            ${escapeHtml(hospital.cardNumber || "未登録")}
-          </div>
-        `;
 
-        card.onclick =
-          function() {
-            showDetail(index);
-          };
+      const department =
+        document.createElement("div");
 
-        list.appendChild(card);
+      department.className =
+        "department";
 
-      }
-    );
+      department.textContent =
+        hospital.department || "";
+
+
+      const label =
+        document.createElement("div");
+
+      label.className = "label";
+      label.textContent = "診察券番号";
+
+
+      const number =
+        document.createElement("div");
+
+      number.className = "value";
+
+      number.textContent =
+        hospital.cardNumber || "未登録";
+
+
+      card.appendChild(name);
+      card.appendChild(department);
+      card.appendChild(label);
+      card.appendChild(number);
+
+
+      card.onclick = function() {
+        showDetail(index);
+      };
+
+
+      list.appendChild(card);
+
+    });
 
   }
 
@@ -378,12 +526,12 @@
   function showDetail(index) {
 
     const hospitals = getHospitals();
-
     const hospital = hospitals[index];
 
     if (!hospital) return;
 
     selectedIndex = index;
+
 
     document.getElementById("detailHospitalName")
       .textContent =
@@ -408,6 +556,10 @@
     document.getElementById("detailPhone")
       .textContent =
       hospital.phone || "未登録";
+
+    document.getElementById("detailAddress")
+      .textContent =
+      hospital.address || "未登録";
 
     document.getElementById("detailMemo")
       .textContent =
@@ -435,10 +587,30 @@
     } else {
 
       document.getElementById("detailAppointment")
-        .textContent =
-        "未登録";
+        .textContent = "未登録";
 
     }
+
+
+    setButtonState(
+      "phoneButton",
+      hospital.phone
+    );
+
+    setButtonState(
+      "mapButton",
+      hospital.address || hospital.hospitalName
+    );
+
+    setButtonState(
+      "webButton",
+      hospital.website
+    );
+
+    setButtonState(
+      "copyButton",
+      hospital.cardNumber
+    );
 
 
     document.getElementById("listView")
@@ -453,6 +625,21 @@
   }
 
 
+  function setButtonState(id, available) {
+
+    const button =
+      document.getElementById(id);
+
+    button.disabled = !available;
+
+    button.classList.toggle(
+      "unavailable",
+      !available
+    );
+
+  }
+
+
   function showForm() {
 
     selectedIndex = null;
@@ -460,8 +647,7 @@
     clearForm();
 
     document.getElementById("formTitle")
-      .textContent =
-      "病院を登録";
+      .textContent = "病院を登録";
 
     document.getElementById("listView")
       .classList.add("hidden");
@@ -478,15 +664,13 @@
   function editHospital() {
 
     const hospitals = getHospitals();
-
-    const hospital =
-      hospitals[selectedIndex];
+    const hospital = hospitals[selectedIndex];
 
     if (!hospital) return;
 
+
     document.getElementById("formTitle")
-      .textContent =
-      "病院情報を編集";
+      .textContent = "病院情報を編集";
 
     document.getElementById("hospitalName")
       .value =
@@ -511,6 +695,14 @@
     document.getElementById("phone")
       .value =
       hospital.phone || "";
+
+    document.getElementById("address")
+      .value =
+      hospital.address || "";
+
+    document.getElementById("website")
+      .value =
+      hospital.website || "";
 
     document.getElementById("appointment")
       .value =
@@ -558,6 +750,14 @@
         document.getElementById("phone")
         .value.trim(),
 
+      address:
+        document.getElementById("address")
+        .value.trim(),
+
+      website:
+        document.getElementById("website")
+        .value.trim(),
+
       appointment:
         document.getElementById("appointment")
         .value,
@@ -572,8 +772,19 @@
     if (!hospital.hospitalName) {
 
       alert("病院名を入力してください。");
-
       return;
+
+    }
+
+
+    if (
+      hospital.website &&
+      !hospital.website.startsWith("http://") &&
+      !hospital.website.startsWith("https://")
+    ) {
+
+      hospital.website =
+        "https://" + hospital.website;
 
     }
 
@@ -649,20 +860,152 @@
     document.getElementById("hours").value = "";
     document.getElementById("closed").value = "";
     document.getElementById("phone").value = "";
+    document.getElementById("address").value = "";
+    document.getElementById("website").value = "";
     document.getElementById("appointment").value = "";
     document.getElementById("memo").value = "";
 
   }
 
 
-  function escapeHtml(text) {
+  function getSelectedHospital() {
 
-    const div =
-      document.createElement("div");
+    const hospitals = getHospitals();
 
-    div.textContent = text;
+    if (selectedIndex === null) return null;
 
-    return div.innerHTML;
+    return hospitals[selectedIndex] || null;
+
+  }
+
+
+  async function copyCardNumber() {
+
+    const hospital =
+      getSelectedHospital();
+
+    if (
+      !hospital ||
+      !hospital.cardNumber
+    ) return;
+
+
+    try {
+
+      await navigator.clipboard.writeText(
+        hospital.cardNumber
+      );
+
+      showToast(
+        "診察券番号をコピーしました"
+      );
+
+    } catch {
+
+      const textarea =
+        document.createElement("textarea");
+
+      textarea.value =
+        hospital.cardNumber;
+
+      document.body.appendChild(textarea);
+
+      textarea.select();
+
+      document.execCommand("copy");
+
+      textarea.remove();
+
+      showToast(
+        "診察券番号をコピーしました"
+      );
+
+    }
+
+  }
+
+
+  function callHospital() {
+
+    const hospital =
+      getSelectedHospital();
+
+    if (
+      !hospital ||
+      !hospital.phone
+    ) return;
+
+
+    const phone =
+      hospital.phone.replace(
+        /[^0-9+]/g,
+        ""
+      );
+
+    window.location.href =
+      "tel:" + phone;
+
+  }
+
+
+  function openMap() {
+
+    const hospital =
+      getSelectedHospital();
+
+    if (!hospital) return;
+
+
+    const destination =
+      hospital.address
+      ? hospital.hospitalName + " " + hospital.address
+      : hospital.hospitalName;
+
+
+    window.location.href =
+      "https://maps.apple.com/?q=" +
+      encodeURIComponent(destination);
+
+  }
+
+
+  function openWebsite() {
+
+    const hospital =
+      getSelectedHospital();
+
+    if (
+      !hospital ||
+      !hospital.website
+    ) return;
+
+
+    window.open(
+      hospital.website,
+      "_blank"
+    );
+
+  }
+
+
+  function showToast(message) {
+
+    const toast =
+      document.getElementById("toast");
+
+    toast.textContent = message;
+
+    toast.classList.remove("hidden");
+
+
+    setTimeout(
+      function() {
+
+        toast.classList.add("hidden");
+
+      },
+      1800
+    );
 
   }
 
