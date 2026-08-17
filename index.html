@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通院メモ</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+
+    header {
+      background: white;
+      padding: 24px 20px 18px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .hospital-card {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .hospital-name {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .number {
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .status {
+      display: inline-block;
+      background: #e8f7ed;
+      color: #16803c;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #007aff;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>通院メモ</h1>
+  </header>
+
+  <main>
+
+    <div class="hospital-card">
+
+      <div class="hospital-name">
+        🏥 いのまた眼科
+      </div>
+
+      <div class="status">
+        ● 本日は診療日
+      </div>
+
+      <div class="section">
+        <div class="label">診察券番号</div>
+        <div class="value number">12345678</div>
+      </div>
+
+      <div class="section">
+        <div class="label">受付時間</div>
+        <div class="value">
+          月・火・木・金<br>
+          8:30〜12:30<br>
+          14:00〜17:30
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">休診日</div>
+        <div class="value">
+          水曜・日曜・祝日
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">次回予約</div>
+        <div class="value">
+          8月25日 14:30
+        </div>
+      </div>
+
+      <button onclick="alert('これから電話機能を追加します')">
+        📞 病院に電話
+      </button>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
