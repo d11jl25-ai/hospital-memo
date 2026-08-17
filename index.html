@@ -319,6 +319,35 @@
     <button onclick="showForm()">
       ＋ 病院を追加
     </button>
+    <button class="secondary" onclick="exportBackup()">
+  📤 バックアップを保存
+</button>
+
+<button class="secondary" onclick="document.getElementById('backupFile').click()">
+  📥 バックアップから復元
+</button>
+
+<input
+  id="backupFile"
+  type="file"
+  accept=".json,application/json"
+  class="hidden"
+  onchange="importBackup(event)">
+
+    <button class="secondary" onclick="exportBackup()">
+  📤 バックアップを保存
+</button>
+
+<button class="secondary" onclick="document.getElementById('backupFile').click()">
+  📥 バックアップから復元
+</button>
+
+<input
+  id="backupFile"
+  type="file"
+  accept=".json,application/json"
+  class="hidden"
+  onchange="importBackup(event)">
 
   </div>
 
@@ -2213,7 +2242,123 @@ function showToast(message) {
 }
 
 
-showList();
+function exportBackup() {
+
+  const hospitals = getHospitals();
+
+  const backup = {
+    app: "通院メモ",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    hospitals: hospitals
+  };
+
+  const json =
+    JSON.stringify(
+      backup,
+      null,
+      2
+    );
+
+  const blob =
+    new Blob(
+      [json],
+      {
+        type: "application/json"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  link.href = url;
+
+  link.download =
+    "hospital-memo-backup.json";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+
+  URL.revokeObjectURL(url);
+
+  showToast(
+    "バックアップを作成しました"
+  );
+
+}
+  function importBackup(event) {
+
+  const file =
+    event.target.files[0];
+
+  if (!file) return;
+
+  const reader =
+    new FileReader();
+
+  reader.onload =
+    function(e) {
+
+      try {
+
+        const backup =
+          JSON.parse(
+            e.target.result
+          );
+
+        if (
+          !backup ||
+          !Array.isArray(
+            backup.hospitals
+          )
+        ) {
+
+          alert(
+            "このファイルは通院メモのバックアップではありません。"
+          );
+
+          return;
+        }
+
+        const answer =
+          confirm(
+            "現在の病院情報を、バックアップの内容に置き換えますか？"
+          );
+
+        if (!answer) return;
+
+        saveHospitals(
+          backup.hospitals
+        );
+
+        showList();
+
+        showToast(
+          "バックアップを復元しました"
+        );
+
+      } catch {
+
+        alert(
+          "バックアップファイルを読み込めませんでした。"
+        );
+
+      }
+
+    };
+
+  reader.readAsText(file);
+
+  event.target.value = "";
+
+}
+  showList();
 
 </script>
 
